@@ -3,6 +3,7 @@ import { Play, Users, Bot, Globe, Shield, Sparkles, Trophy, Dices, ChevronRight,
 import { sound } from '../game/sound';
 
 export default function Home({
+  currentUser = null,
   onStartGame,
   onNavigateToLobby,
   onJoinRoom,
@@ -17,7 +18,7 @@ export default function Home({
     if (selectedMode === 'online') {
       onNavigateToLobby({ playerCount, mode: 'online' });
     } else {
-      onStartGame({ mode: selectedMode, playerCount });
+      onStartGame({ mode: selectedMode, playerCount, userName: currentUser?.username || 'You' });
     }
   };
 

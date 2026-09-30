@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Gamepad2, Users, Trophy, User, Settings, Volume2, VolumeX, Menu, X } from 'lucide-react';
+import { Gamepad2, Users, Trophy, User, Settings, Volume2, VolumeX, Menu, X, LogIn, LogOut, Sparkles } from 'lucide-react';
 import { sound } from '../game/sound';
 
 export default function Navbar({
@@ -7,12 +7,15 @@ export default function Navbar({
   onNavigate,
   sfxEnabled = true,
   onToggleSfx,
+  currentUser = null,
+  onOpenLogin,
+  onLogout,
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
     { id: 'home', label: 'Play Arena', icon: Gamepad2 },
-    { id: 'lobby', label: 'Rooms', icon: Users },
+    { id: 'lobby', label: 'Live Rooms', icon: Users },
     { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'settings', label: 'Settings', icon: Settings },
@@ -47,8 +50,9 @@ export default function Navbar({
             <div className="font-black text-lg sm:text-xl tracking-tight text-white leading-none">
               LUDO <span className="bg-gradient-to-r from-purple-400 to-indigo-300 bg-clip-text text-transparent">ARENA</span>
             </div>
-            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              Next-Gen Board Gaming
+            <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 flex items-center gap-1">
+              <span>Live Multiplayer</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             </div>
           </div>
         </button>
@@ -94,6 +98,38 @@ export default function Navbar({
             {sfxEnabled ? <Volume2 className="w-4 h-4 text-purple-400" /> : <VolumeX className="w-4 h-4 text-slate-500" />}
           </button>
 
+          {/* User Account / Login Button */}
+          {currentUser ? (
+            <button
+              type="button"
+              onClick={() => handleNav('profile')}
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-purple-950/40 hover:bg-purple-900/50 border border-purple-500/40 transition-all cursor-pointer"
+              title="View Profile"
+            >
+              <span className="text-lg">{currentUser.avatar || '🦊'}</span>
+              <div className="text-left hidden sm:block">
+                <span className="text-xs font-bold text-white block leading-tight truncate max-w-[90px]">
+                  {currentUser.username}
+                </span>
+                <span className="text-[9px] text-amber-300 font-extrabold uppercase">
+                  Lvl {currentUser.level || 1}
+                </span>
+              </div>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                sound.playClick();
+                onOpenLogin();
+              }}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-xs font-bold shadow-md hover:brightness-110 transition-all cursor-pointer"
+            >
+              <LogIn className="w-3.5 h-3.5" />
+              <span>Login</span>
+            </button>
+          )}
+
           {/* Mobile Menu Hamburger */}
           <button
             type="button"
@@ -130,6 +166,20 @@ export default function Navbar({
               </button>
             );
           })}
+          {!currentUser && (
+            <button
+              type="button"
+              onClick={() => {
+                sound.playClick();
+                setMobileMenuOpen(false);
+                onOpenLogin();
+              }}
+              className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold bg-purple-600 text-white shadow-md text-left"
+            >
+              <LogIn className="w-4 h-4" />
+              <span>Sign In / Create Account</span>
+            </button>
+          )}
         </div>
       )}
     </header>

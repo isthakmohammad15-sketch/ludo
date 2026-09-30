@@ -6,28 +6,62 @@ import Lobby from './pages/Lobby';
 import Profile from './pages/Profile';
 import Leaderboard from './pages/Leaderboard';
 import Settings from './pages/Settings';
+import Login from './pages/Login';
 import { sound } from './game/sound';
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('home');
   const [activeGameConfig, setActiveGameConfig] = useState(null);
   const [sfxEnabled, setSfxEnabled] = useState(true);
-  const [userName, setUserName] = useState('Alex Mercer');
 
-  // Load saved preferences if available
-  useEffect(() => {
+  // Authenticated user state
+  const [currentUser, setCurrentUser] = useState(() => {
     try {
-      const savedName = localStorage.getItem('ludo_username');
-      if (savedName) setUserName(savedName);
+      const saved = localStorage.getItem('ludo_auth_user');
+      if (saved) return JSON.parse(saved);
     } catch (e) {
       console.log(e);
     }
-  }, []);
+    // Default initial account
+    return {
+      id: 'u-alex',
+      username: 'AlexMercer',
+      email: 'alex@arena.ludo',
+      avatar: '🦊',
+      level: 14,
+      xp: 3450,
+      gamesPlayed: 86,
+      gamesWon: 53,
+      tokensCaptured: 194,
+      tokensLost: 112,
+      points: 3450,
+    };
+  });
 
-  const handleUpdateUserName = (newName) => {
-    setUserName(newName);
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user);
     try {
-      localStorage.setItem('ludo_username', newName);
+      localStorage.setItem('ludo_auth_user', JSON.stringify(user));
+    } catch (e) {
+      console.log(e);
+    }
+    setCurrentPage('profile');
+  };
+
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem('ludo_auth_user');
+    } catch (e) {
+      console.log(e);
+    }
+    setCurrentUser(null);
+    setCurrentPage('login');
+  };
+
+  const handleUpdateUser = (updated) => {
+    setCurrentUser(updated);
+    try {
+      localStorage.setItem('ludo_auth_user', JSON.stringify(updated));
     } catch (e) {
       console.log(e);
     }
@@ -65,13 +99,16 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#080B14] text-slate-100 flex flex-col font-['Outfit',sans-serif] selection:bg-purple-600 selection:text-white overflow-x-hidden">
-      {/* Global Navigation Header (hide during active game for maximum board space, or keep slim) */}
+      {/* Global Navigation Header (hide during active game for maximum board space) */}
       {currentPage !== 'game' && (
         <Navbar
           currentPage={currentPage}
           onNavigate={(page) => setCurrentPage(page)}
           sfxEnabled={sfxEnabled}
           onToggleSfx={handleToggleSfx}
+          currentUser={currentUser}
+          onOpenLogin={() => setCurrentPage('login')}
+          onLogout={handleLogout}
         />
       )}
 
@@ -79,15 +116,25 @@ export default function App() {
       <main className="flex-1 w-full">
         {currentPage === 'home' && (
           <Home
+            currentUser={currentUser}
             onStartGame={handleStartGame}
             onNavigateToLobby={handleNavigateToLobby}
             onJoinRoom={handleJoinRoom}
           />
         )}
 
+        {currentPage === 'login' && (
+          <Login
+            currentUser={currentUser}
+            onLoginSuccess={handleLoginSuccess}
+            onCancel={() => setCurrentPage('home')}
+          />
+        )}
+
         {currentPage === 'game' && activeGameConfig && (
           <Game
             gameConfig={activeGameConfig}
+            currentUser={currentUser}
             onExitToMenu={handleExitToMenu}
           />
         )}
@@ -97,7 +144,7 @@ export default function App() {
             roomId={activeGameConfig?.roomId}
             isHost={activeGameConfig?.isHost ?? true}
             playerCount={activeGameConfig?.playerCount ?? 4}
-            currentUser={{ id: 'p-red', name: userName, avatar: '🦊' }}
+            currentUser={currentUser || { id: 'guest-1', username: 'GuestPlayer', avatar: '🦊' }}
             onStartGame={handleStartGame}
             onLeave={handleExitToMenu}
           />
@@ -105,13 +152,14 @@ export default function App() {
 
         {currentPage === 'profile' && (
           <Profile
-            userName={userName}
-            onUpdateUserName={handleUpdateUserName}
+            currentUser={currentUser}
+            onUpdateUser={handleUpdateUser}
+            onLogout={handleLogout}
           />
         )}
 
         {currentPage === 'leaderboard' && (
-          <Leaderboard />
+          <Leaderboard currentUser={currentUser} />
         )}
 
         {currentPage === 'settings' && (
@@ -120,33 +168,33 @@ export default function App() {
       </main>
 
       {/* Footer (only on landing / non-game pages) */}
-      {currentPage !== 'game' && (
+      {currentPage !== 'game' && currentPage !== 'login' && (
         <footer className="w-full border-t border-slate-800/80 py-6 px-4 text-center text-xs text-slate-500 bg-[#060910]">
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-purple-500" />
               <span className="font-bold text-slate-400">Ludo Arena</span>
-              <span>— Modern Real-Time Web Board Game</span>
+              <span>— Live Real-Time Multiplayer Board Game</span>
             </div>
             <div className="flex items-center gap-4 text-slate-400">
               <button
                 type="button"
                 onClick={() => setCurrentPage('settings')}
-                className="hover:text-white transition-colors"
+                className="hover:text-white transition-colors cursor-pointer"
               >
                 Game Rules
               </button>
               <button
                 type="button"
                 onClick={() => setCurrentPage('leaderboard')}
-                className="hover:text-white transition-colors"
+                className="hover:text-white transition-colors cursor-pointer"
               >
                 Rankings
               </button>
               <button
                 type="button"
                 onClick={() => setCurrentPage('profile')}
-                className="hover:text-white transition-colors"
+                className="hover:text-white transition-colors cursor-pointer"
               >
                 My Profile
               </button>

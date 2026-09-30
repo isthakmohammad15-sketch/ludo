@@ -13,10 +13,12 @@ import { applyTokenMove } from '../game/movement';
 import { getBestAIMove } from '../game/ai';
 import { multiplayer } from '../game/multiplayer';
 import { sound } from '../game/sound';
+import { recordCompletedMatch } from '../game/api';
 
 export default function Game({
   gameConfig = {},
   onExitToMenu,
+  currentUser = null,
 }) {
   const {
     mode = 'ai',
@@ -24,6 +26,7 @@ export default function Game({
     roomId = null,
     customPlayers = null,
   } = gameConfig;
+
 
   // Initialize master state
   const [gameState, setGameState] = useState(() => {
@@ -46,6 +49,9 @@ export default function Game({
 
   const activePlayer = gameState.players[gameState.activePlayerIndex] || {};
   const isHumanTurn = !activePlayer.isBot;
+  const isMyTurn = mode === 'online'
+    ? (activePlayer.id === currentUser?.id || activePlayer.name === currentUser?.username)
+    : isHumanTurn;
   const isFinished = !!gameState.winner;
 
   // Sound and settings toggles
@@ -241,6 +247,21 @@ export default function Game({
       if (isWinner && !nextWinner) {
         nextWinner = nextPlayers[playerIdx];
         nextRankings.push(nextWinner);
+
+        // Record real completed match in backend database
+        recordCompletedMatch({
+          winnerId: nextWinner.id,
+          winnerColor: nextWinner.color,
+          mode,
+          participants: nextPlayers.map((p, idx) => ({
+            userId: p.id,
+            name: p.name,
+            color: p.color,
+            captured: p.stats?.captured || 0,
+            lost: p.stats?.lost || 0,
+            rank: p.id === nextWinner.id ? '1st' : `${idx + 1}th`,
+          })),
+        }).catch(e => console.warn('Record match error:', e));
       }
 
       // Delay turn progression slightly to allow move animation
@@ -267,13 +288,11 @@ export default function Game({
 
   const handleSelectToken = (tokenIndex) => {
     if (gameState.turnState !== 'moving' || isFinished) return;
+    if (mode === 'online' && !isMyTurn) return;
     if (!gameState.movableTokenIds.includes(tokenIndex)) return;
 
     if (mode === 'online' && roomId) {
-      multiplayer.broadcast('token-moved', {
-        tokenIndex,
-        playerIndex: gameState.activePlayerIndex,
-      });
+      multiplayer.moveToken(tokenIndex, gameState.activePlayerIndex);
     }
 
     executeTokenMove(tokenIndex, gameState.activePlayerIndex);
@@ -456,7 +475,7 @@ export default function Game({
             <Dice
               value={gameState.diceValue || 6}
               isRolling={gameState.isRolling}
-              canRoll={isHumanTurn && gameState.turnState === 'rolling' && !isFinished}
+              canRoll={isMyTurn && gameState.turnState === 'rolling' && !isFinished}
               onRoll={handleRollDice}
               activeColor={activePlayer.color || 'red'}
               playerName={activePlayer.name || 'Player'}
@@ -470,7 +489,7 @@ export default function Game({
             messages={gameState.chat}
             onSendMessage={handleSendChatMessage}
             currentUserColor={activePlayer.color}
-            currentUserName="You"
+            currentUserName={currentUser?.username || 'You'}
           />
         </div>
       </div>

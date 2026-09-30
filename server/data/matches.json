@@ -1,0 +1,29 @@
+[
+  {
+    "id": "m-1790784240352",
+    "date": "2026-09-30T16:04:00.352Z",
+    "mode": "4P Online",
+    "winnerId": "u-1790784226390",
+    "winnerColor": "red",
+    "participants": [
+      {
+        "userId": "u-1790784226390",
+        "name": "ProWarrior",
+        "color": "red",
+        "captured": 4,
+        "lost": 1,
+        "rank": "1st",
+        "isWinner": true
+      },
+      {
+        "userId": "u-valkyrie",
+        "name": "ValkyriePrime",
+        "color": "green",
+        "captured": 2,
+        "lost": 3,
+        "rank": "2nd",
+        "isWinner": false
+      }
+    ]
+  }
+]

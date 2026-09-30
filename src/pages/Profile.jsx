@@ -1,53 +1,62 @@
-import React, { useState } from 'react';
-import { User, Trophy, Award, Swords, Shield, Zap, Sparkles, Check, Edit2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Trophy, Award, Swords, Shield, Zap, Sparkles, Check, Edit2, LogOut } from 'lucide-react';
+import { fetchUserMatches } from '../game/api';
 import { sound } from '../game/sound';
 
-const AVATAR_OPTIONS = ['🦊', '🐉', '🦁', '🦅', '🐺', '🐯', '🐼', '🤖', '👑', '⚡'];
+const AVATAR_OPTIONS = ['🦊', '🐉', '🦁', '🦅', '🐺', '⚡', '👑', '🤖'];
 
 export default function Profile({
-  userName: initialName = 'Alex Mercer',
-  onUpdateUserName,
+  currentUser,
+  onUpdateUser,
+  onLogout,
 }) {
-  const [userName, setUserName] = useState(initialName);
   const [isEditing, setIsEditing] = useState(false);
-  const [selectedAvatar, setSelectedAvatar] = useState('🦊');
+  const [editName, setEditName] = useState(currentUser?.username || 'Warrior');
+  const [selectedAvatar, setSelectedAvatar] = useState(currentUser?.avatar || '🦊');
+  const [matchHistory, setMatchHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Realistic profile statistics
+  useEffect(() => {
+    if (currentUser?.id) {
+      fetchUserMatches(currentUser.id)
+        .then(matches => setMatchHistory(matches || []))
+        .catch(err => console.error('Failed to load user matches:', err))
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [currentUser]);
+
+  const level = currentUser?.level || 1;
+  const xp = currentUser?.xp || 0;
+  const nextLevelXp = level * 500;
+  const xpPercent = Math.min(100, Math.round((xp / nextLevelXp) * 100));
+
   const stats = {
-    level: 14,
-    currentXp: 3450,
-    nextLevelXp: 5000,
-    gamesPlayed: 86,
-    gamesWon: 53,
-    winRate: 61.6,
-    tokensCaptured: 194,
-    tokensLost: 112,
-    highestWinStreak: 7,
+    gamesPlayed: currentUser?.gamesPlayed || 0,
+    gamesWon: currentUser?.gamesWon || 0,
+    winRate: currentUser?.gamesPlayed ? Math.round((currentUser.gamesWon / currentUser.gamesPlayed) * 1000) / 10 : 0,
+    tokensCaptured: currentUser?.tokensCaptured || 0,
+    tokensLost: currentUser?.tokensLost || 0,
+    points: currentUser?.points || 0,
   };
 
-  const xpPercent = Math.round((stats.currentXp / stats.nextLevelXp) * 100);
-
-  const matchHistory = [
-    { id: 'm1', date: 'Today, 10:24 AM', mode: '4P vs AI', result: 'Victory', color: 'red', captured: 5, rank: '1st' },
-    { id: 'm2', date: 'Yesterday, 8:40 PM', mode: 'Online Room', result: 'Victory', color: 'yellow', captured: 3, rank: '1st' },
-    { id: 'm3', date: 'Sep 28, 4:15 PM', mode: 'Pass & Play', result: 'Defeat', color: 'blue', captured: 2, rank: '2nd' },
-    { id: 'm4', date: 'Sep 27, 9:10 PM', mode: '4P vs AI', result: 'Victory', color: 'green', captured: 6, rank: '1st' },
-    { id: 'm5', date: 'Sep 26, 3:30 PM', mode: 'Online Room', result: 'Defeat', color: 'red', captured: 1, rank: '3rd' },
-  ];
-
   const badges = [
-    { id: 'b1', name: 'First Blood', desc: 'Capture your first opponent token', icon: '⚔️', unlocked: true },
-    { id: 'b2', name: 'High Roller', desc: 'Roll three 6s in a single match', icon: '🎲', unlocked: true },
-    { id: 'b3', name: 'Safe Haven', desc: 'Reach 4 safe star cells in one game', icon: '🛡️', unlocked: true },
-    { id: 'b4', name: 'Grandmaster', desc: 'Win 50 arena matches', icon: '👑', unlocked: true },
-    { id: 'b5', name: 'Untouchable', desc: 'Win a match without losing any token', icon: '✨', unlocked: false },
+    { id: 'b1', name: 'First Blood', desc: 'Capture an opponent token', icon: '⚔️', unlocked: stats.tokensCaptured > 0 },
+    { id: 'b2', name: 'Arena Victor', desc: 'Win your first arena match', icon: '🏆', unlocked: stats.gamesWon > 0 },
+    { id: 'b3', name: 'Master Strategist', desc: 'Win 5 arena matches', icon: '👑', unlocked: stats.gamesWon >= 5 },
+    { id: 'b4', name: 'Century Club', desc: 'Reach 100+ points', icon: '⚡', unlocked: stats.points >= 100 },
   ];
 
-  const handleSaveName = () => {
+  const handleSaveProfile = () => {
     sound.playClick();
     setIsEditing(false);
-    if (onUpdateUserName) {
-      onUpdateUserName(userName);
+    if (onUpdateUser) {
+      onUpdateUser({
+        ...currentUser,
+        username: editName,
+        avatar: selectedAvatar,
+      });
     }
   };
 
@@ -58,57 +67,76 @@ export default function Profile({
         <div className="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 relative z-10 text-center sm:text-left">
-          {/* Avatar with Selector */}
+          {/* Avatar */}
           <div className="relative group">
             <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-br from-purple-600 via-indigo-600 to-purple-800 border-2 border-purple-400/60 p-1 shadow-xl flex items-center justify-center text-5xl">
-              {selectedAvatar}
+              {currentUser?.avatar || selectedAvatar}
             </div>
           </div>
 
           {/* User Details */}
           <div className="flex-1">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
-              {isEditing ? (
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
-                    className="bg-slate-950 border border-purple-500 rounded-xl px-3 py-1.5 text-lg font-bold text-white focus:outline-none"
-                    autoFocus
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSaveName}
-                    className="p-2 rounded-xl bg-purple-600 text-white hover:bg-purple-500"
-                  >
-                    <Check className="w-4 h-4" />
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 justify-center sm:justify-start">
-                  <h1 className="text-2xl sm:text-3xl font-black text-white">{userName}</h1>
-                  <button
-                    type="button"
-                    onClick={() => setIsEditing(true)}
-                    className="p-1 text-slate-400 hover:text-white transition-colors"
-                    title="Edit Name"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+              <div className="flex items-center gap-2 justify-center sm:justify-start">
+                {isEditing ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="bg-slate-950 border border-purple-500 rounded-xl px-3 py-1.5 text-lg font-bold text-white focus:outline-none"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={handleSaveProfile}
+                      className="p-2 rounded-xl bg-purple-600 text-white hover:bg-purple-500"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-2xl sm:text-3xl font-black text-white">
+                      {currentUser?.username || 'Warrior'}
+                    </h1>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditing(true)}
+                      className="p-1 text-slate-400 hover:text-white transition-colors"
+                      title="Edit Profile"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
 
-              <span className="inline-flex items-center gap-1 bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                <Sparkles className="w-3 h-3" /> Arena Master
-              </span>
+                <span className="inline-flex items-center gap-1 bg-amber-500/20 text-amber-300 border border-amber-500/40 text-xs font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                  <Sparkles className="w-3 h-3" /> Level {level}
+                </span>
+              </div>
+
+              {/* Logout Button */}
+              {onLogout && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    sound.playClick();
+                    onLogout();
+                  }}
+                  className="px-3.5 py-1.5 rounded-xl bg-slate-900 border border-slate-700 hover:bg-red-950/40 hover:border-red-500/40 text-slate-300 hover:text-red-400 text-xs font-bold transition-all flex items-center gap-1.5"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Log Out</span>
+                </button>
+              )}
             </div>
 
             {/* Level & XP Bar */}
             <div className="mt-3 max-w-md">
               <div className="flex items-center justify-between text-xs font-bold mb-1">
-                <span className="text-purple-300">Level {stats.level} Warrior</span>
-                <span className="text-slate-400">{stats.currentXp} / {stats.nextLevelXp} XP ({xpPercent}%)</span>
+                <span className="text-purple-300">Level {level} Arena Fighter</span>
+                <span className="text-slate-400">{xp} / {nextLevelXp} XP ({xpPercent}%)</span>
               </div>
               <div className="w-full h-2.5 bg-slate-900 rounded-full overflow-hidden border border-slate-800">
                 <div
@@ -119,29 +147,31 @@ export default function Profile({
             </div>
 
             {/* Avatar picker strip */}
-            <div className="mt-4 flex items-center gap-1.5 flex-wrap justify-center sm:justify-start">
-              <span className="text-[10px] uppercase font-bold text-slate-400 mr-1">Avatar:</span>
-              {AVATAR_OPTIONS.map((av) => (
-                <button
-                  key={av}
-                  type="button"
-                  onClick={() => {
-                    sound.playClick();
-                    setSelectedAvatar(av);
-                  }}
-                  className={`w-7 h-7 rounded-lg text-sm flex items-center justify-center transition-all ${
-                    selectedAvatar === av ? 'bg-purple-600 scale-110 shadow-md' : 'bg-slate-800/80 hover:bg-slate-700'
-                  }`}
-                >
-                  {av}
-                </button>
-              ))}
-            </div>
+            {isEditing && (
+              <div className="mt-4 flex items-center gap-1.5 flex-wrap justify-center sm:justify-start">
+                <span className="text-[10px] uppercase font-bold text-slate-400 mr-1">Avatar:</span>
+                {AVATAR_OPTIONS.map((av) => (
+                  <button
+                    key={av}
+                    type="button"
+                    onClick={() => {
+                      sound.playClick();
+                      setSelectedAvatar(av);
+                    }}
+                    className={`w-7 h-7 rounded-lg text-sm flex items-center justify-center transition-all ${
+                      selectedAvatar === av ? 'bg-purple-600 scale-110 shadow-md ring-2 ring-white' : 'bg-slate-800/80 hover:bg-slate-700'
+                    }`}
+                  >
+                    {av}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Stats Cards Grid */}
+      {/* Real Stats Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <div className="p-4 rounded-2xl glass-card border border-slate-800 text-center">
           <span className="text-xs text-slate-400 font-semibold block mb-1">Matches Played</span>
@@ -163,52 +193,64 @@ export default function Profile({
 
       {/* Match History & Badges Section */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Match History Table (2 cols) */}
+        {/* Real Match History Table */}
         <div className="md:col-span-2 p-5 rounded-3xl glass-panel-elevated border border-slate-800">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-extrabold text-base text-white flex items-center gap-2">
               <Swords className="w-4 h-4 text-purple-400" />
-              <span>Recent Arena Matches</span>
+              <span>Real Match History</span>
             </h3>
-            <span className="text-xs text-slate-400 font-semibold">Last 5 Games</span>
+            <span className="text-xs text-slate-400 font-semibold">{matchHistory.length} Recorded</span>
           </div>
 
-          <div className="space-y-2">
-            {matchHistory.map((m) => {
-              const isWin = m.result === 'Victory';
-              return (
-                <div
-                  key={m.id}
-                  className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between text-xs"
-                >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={`font-black uppercase text-[10px] px-2 py-0.5 rounded-full ${
-                        isWin ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                      }`}
-                    >
-                      {m.result}
-                    </span>
-                    <div>
-                      <span className="font-bold text-slate-200 block">{m.mode}</span>
-                      <span className="text-[10px] text-slate-400">{m.date}</span>
-                    </div>
-                  </div>
+          {matchHistory.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 text-xs">
+              No matches recorded yet. Jump into an arena match to start building your battle history!
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {matchHistory.map((m) => {
+                const myParticipant = m.participants?.find(p => p.userId === currentUser.id);
+                const isWin = myParticipant?.isWinner || m.winnerId === currentUser.id;
 
-                  <div className="flex items-center gap-4 text-right">
-                    <div>
-                      <span className="text-slate-400 block text-[10px]">Captured</span>
-                      <span className="font-bold text-purple-300">{m.captured} tokens</span>
+                return (
+                  <div
+                    key={m.id}
+                    className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between text-xs"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`font-black uppercase text-[10px] px-2 py-0.5 rounded-full ${
+                          isWin
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                        }`}
+                      >
+                        {isWin ? 'Victory' : 'Defeat'}
+                      </span>
+                      <div>
+                        <span className="font-bold text-slate-200 block">{m.mode}</span>
+                        <span className="text-[10px] text-slate-400">
+                          {new Date(m.date).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                        </span>
+                      </div>
                     </div>
-                    <span className="font-black text-sm text-slate-100">{m.rank}</span>
+
+                    <div className="flex items-center gap-4 text-right">
+                      <div>
+                        <span className="text-slate-400 block text-[10px]">Captured</span>
+                        <span className="font-bold text-purple-300">{myParticipant?.captured || 0} tokens</span>
+                      </div>
+                      <span className="font-black text-sm text-slate-100">{myParticipant?.rank || (isWin ? '1st' : '2nd')}</span>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Badges / Achievements (1 col) */}
+        {/* Badges / Achievements */}
         <div className="p-5 rounded-3xl glass-panel-elevated border border-slate-800">
           <h3 className="font-extrabold text-base text-white flex items-center gap-2 mb-4">
             <Award className="w-4 h-4 text-amber-400" />

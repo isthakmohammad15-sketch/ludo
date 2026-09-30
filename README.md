@@ -79,13 +79,23 @@
    npm install
    ```
 
-3. Launch development server:
+3. Launch Full-Stack Real-Time Arena (Server + Client):
    ```bash
    npm run dev
    ```
-   Open [http://localhost:5173](http://localhost:5173) in your browser.
+   - **Frontend**: [http://localhost:5173](http://localhost:5173)
+   - **Real-Time WebSocket Server**: [http://localhost:3001](http://localhost:3001)
 
-4. Build for production:
+4. Or run separately:
+   ```bash
+   # Run WebSocket + REST Backend Server
+   npm run server
+
+   # Run Vite Frontend Dev Client
+   npm run dev:client
+   ```
+
+5. Build for production:
    ```bash
    npm run build
    ```
