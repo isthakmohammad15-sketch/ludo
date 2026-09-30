@@ -1,0 +1,151 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-dark: #080B14;
+    --bg-card: #111827;
+    --red-ludo: #EF4444;
+    --green-ludo: #22C55E;
+    --yellow-ludo: #FACC15;
+    --blue-ludo: #3B82F6;
+    --accent: #8B5CF6;
+  }
+
+  body {
+    background-color: #080B14;
+    color: #F8FAFC;
+    font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0B0F1D;
+}
+::-webkit-scrollbar-thumb {
+  background: #252F48;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3B4B72;
+}
+
+/* Glassmorphism Classes */
+.glass-panel {
+  background: rgba(17, 24, 39, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-elevated {
+  background: rgba(22, 30, 49, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6), 0 0 20px 0 rgba(139, 92, 246, 0.08);
+}
+
+.glass-card {
+  background: rgba(17, 24, 39, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Glow effects */
+.glow-red {
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.45);
+}
+.glow-green {
+  box-shadow: 0 0 25px rgba(34, 197, 94, 0.45);
+}
+.glow-yellow {
+  box-shadow: 0 0 25px rgba(250, 204, 21, 0.45);
+}
+.glow-blue {
+  box-shadow: 0 0 25px rgba(59, 130, 246, 0.45);
+}
+.glow-accent {
+  box-shadow: 0 0 25px rgba(139, 92, 246, 0.45);
+}
+
+/* 3D Dice Perspective */
+.perspective-dice {
+  perspective: 600px;
+}
+
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+
+/* Animations */
+@keyframes pulseGlow {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 4px currentColor);
+  }
+  50% {
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 12px currentColor);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes tokenBounce {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.06);
+  }
+}
+
+.animate-token-bounce {
+  animation: tokenBounce 0.9s cubic-bezier(0.28, 0.84, 0.42, 1) infinite;
+}
+
+@keyframes diceRoll3D {
+  0% {
+    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(0.9);
+  }
+  25% {
+    transform: rotateX(360deg) rotateY(180deg) rotateZ(90deg) scale(1.15);
+  }
+  50% {
+    transform: rotateX(720deg) rotateY(540deg) rotateZ(270deg) scale(1.05);
+  }
+  75% {
+    transform: rotateX(1080deg) rotateY(720deg) rotateZ(450deg) scale(1.1);
+  }
+  100% {
+    transform: rotateX(1440deg) rotateY(1080deg) rotateZ(720deg) scale(1);
+  }
+}
+
+.animate-dice-roll {
+  animation: diceRoll3D 0.85s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+@keyframes floatAnim {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(2deg);
+  }
+}
+
+.animate-float {
+  animation: floatAnim 4s ease-in-out infinite;
+}
