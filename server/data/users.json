@@ -73,5 +73,20 @@
     "tokensLost": 1,
     "points": 150,
     "createdAt": "2026-09-30T16:03:46.390Z"
+  },
+  {
+    "id": "u-1790784389689",
+    "username": "new",
+    "email": "isthakmohammad15@gmail.com",
+    "password": "1234567",
+    "avatar": "🐉",
+    "level": 1,
+    "xp": 0,
+    "gamesPlayed": 0,
+    "gamesWon": 0,
+    "tokensCaptured": 0,
+    "tokensLost": 0,
+    "points": 0,
+    "createdAt": "2026-09-30T16:06:29.689Z"
   }
 ]
